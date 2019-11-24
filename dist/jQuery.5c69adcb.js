@@ -131,9 +131,9 @@ window.$ = window.jQuery = function (selector) {
 
   if (typeof selector === 'string') {
     if (selector[0] === '<') {
-      elements = createElement(selector);
+      elements = [createElement(selector)]; //这里加[]，让其变成数组，配合后面elements[i]
     } else {
-      elements = [document.querySelectorAll(selector)];
+      elements = document.querySelectorAll(selector);
     }
   } else if (selector instanceof Array) {
     elements = selector;
@@ -147,90 +147,161 @@ window.$ = window.jQuery = function (selector) {
   } //创建新的标签
 
 
-  return {
+  var api = Object.create(jQuery.prototype); //创建一个api对象，将函数都封装在__proto__(=jQuery.prototype)里面
+
+  Object.assign(api, {
     oidApi: elements.oldApi,
-    elements: elements,
-    jquery: true,
-    addClass: function addClass(className) {
-      for (var i = 0; i < elements.length; i++) {
-        elements[i].classList.add(className);
-      }
-
-      return this;
-    },
-    //所有elements前都要加this.
-    find: function find(selector) {
-      var array = [];
-
-      for (var i = 0; i < elements.length; i++) {
-        array.push.apply(array, _toConsumableArray(elements[i].querySelectorAll(selector)));
-      }
-
-      array.oldApi = this;
-      return jQuery(array);
-    },
-    each: function each(fn) {
-      for (var i = 0; i < elements.length; i++) {
-        fn.call(null, elements[i], i);
-      }
-    },
-    parent: function parent() {
-      var array = [];
-      this.each(function (n) {
-        if (array.indexOf(n.parentNode) === -1) {
-          array.push(n.parentNode);
-        }
-      });
-      return jQuery(array);
-    },
-    children: function children() {
-      var array = [];
-      this.each(function (n) {
-        array.push.apply(array, _toConsumableArray(n.children));
-      });
-      return jQuery(array);
-    },
-    get: function get(index) {
-      return elements[index];
-    },
-    print: function print() {
-      console.log(this.elements);
-    },
-    appendTo: function appendTo(node) {
-      if (node instanceof Element) {
-        this.each(function (el) {
-          return node.appendChild(el);
-        });
-      } else if (node.jquery === true) {
-        this.each(function (el) {
-          return node.get(0).appendChild(el);
-        });
-      }
-    },
-    append: function append(children) {
-      var _this = this;
-
-      if (children instanceof Element) {
-        this.get(0).appendChild(children);
-      } else if (children instanceof HTMLCollection) {
-        for (var i = 0; i < children.length; i++) {
-          this.get(0).appendChild(children[i]);
-        }
-      } else if (children.jquery === true) {
-        children.each(function (node) {
-          return _this.get(0).appendChild(node);
-        });
-      }
-    },
-    end: function end() {
-      return this.oldApi;
-    }
-  }; //创建一个api对象，将函数都封装在__proto__(=jQuery.prototype)里面
+    elements: elements
+  });
+  return api;
 };
 
+jQuery.prototype = {
+  constructor: jQuery,
+  jquery: true,
+  get: function get(index) {
+    return this.elements[index]; //将jQuery.prototype独立出来，所有elements前都要加this.
+  },
+  print: function print() {
+    console.log(this.elements);
+  },
+  addClass: function addClass(className) {
+    for (var i = 0; i < this.elements.length; i++) {
+      this.elements[i].classList.add(className);
+    }
+
+    return this;
+  },
+  find: function find(selector) {
+    var array = [];
+
+    for (var i = 0; i < this.elements.length; i++) {
+      array.push.apply(array, _toConsumableArray(this.elements[i].querySelectorAll(selector)));
+    }
+
+    array.oldApi = this;
+    return jQuery(array);
+  },
+  end: function end() {
+    return this.oldApi;
+  },
+  each: function each(fn) {
+    for (var i = 0; i < this.elements.length; i++) {
+      fn.call(null, this.elements[i], i);
+    }
+  },
+  parent: function parent() {
+    var array = [];
+    this.each(function (n) {
+      if (array.indexOf(n.parentNode) === -1) {
+        array.push(n.parentNode);
+      }
+    });
+    return jQuery(array);
+  },
+  children: function children() {
+    var array = [];
+    this.each(function (n) {
+      array.push.apply(array, _toConsumableArray(n.children));
+    });
+    return jQuery(array);
+  },
+  appendTo: function appendTo(node) {
+    if (node instanceof Element) {
+      this.each(function (el) {
+        return node.appendChild(el);
+      });
+    } else if (node.jquery === true) {
+      this.each(function (el) {
+        return node.get(0).appendChild(el);
+      });
+    }
+
+    return this;
+  },
+  append: function append(children) {
+    var _this = this;
+
+    if (children instanceof Element) {
+      this.get(0).appendChild(children);
+    } else if (children instanceof HTMLCollection) {
+      for (var i = 0; i < children.length; i++) {
+        this.get(0).appendChild(children[i]);
+      }
+    } else if (children.jquery === true) {
+      children.each(function (node) {
+        return _this.get(0).appendChild(node);
+      });
+    }
+
+    return this;
+  },
+  siblings: function siblings() {
+    var _this2 = this;
+
+    var parents = [];
+    this.each(function (n) {
+      if (parents.indexOf(n.parentNode) === -1) {
+        parents.push(n.parentNode);
+      }
+    }); //console.log(parents)
+
+    var array = [];
+
+    for (var i = 0; i < parents.length; i++) {
+      var _array;
+
+      (_array = array).push.apply(_array, _toConsumableArray(parents[i].children));
+    } //得到包含自己的siblings
+
+
+    var _loop = function _loop(_i) {
+      array = array.filter(function (n) {
+        return n !== _this2.elements[_i];
+      });
+    };
+
+    for (var _i = 0; _i < this.elements.length; _i++) {
+      _loop(_i);
+    }
+
+    return this;
+  },
+  prev: function prev() {
+    var array = []; // this.each(el=>array.push(el.previousNode))
+
+    for (var i = 0; i < this.elements.length; i++) {
+      var x = this.elements[i].previousSibling;
+
+      while (x && x.nodeType === 3) {
+        x = x.previousSibling;
+      }
+
+      array.push(x);
+    }
+
+    return array;
+  },
+  next: function next() {
+    var array = [];
+    this.each(function (el) {
+      var x = el.nextSibling;
+
+      while (x && x.nodeType === 3) {
+        x = x.nextSibling;
+      }
+
+      array.push(x);
+    });
+    return array;
+  }
+};
 $('#test').find('.child').addClass('red');
 $('#test').print();
-$('<div>11</div>').appendTo(test);
+$('<div>11</div>').appendTo(test2);
+$('#test2').append($('<div><strong>22</strong></div>')).addClass('red');
+$('#hapi').siblings();
+console.log($('#test').next());
 },{}],"C:/Users/admin/AppData/Local/Yarn/Data/global/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -259,7 +330,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50578" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50273" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
