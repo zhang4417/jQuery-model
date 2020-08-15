@@ -294,15 +294,45 @@ jQuery.prototype = {
       array.push(x);
     });
     return array;
+  },
+  on: function on(event, elementStr, fn) {
+    var _this3 = this;
+
+    var _loop2 = function _loop2(i) {
+      var client = _this3.elements[i];
+      client.addEventListener(event, function (e) {
+        var el = e.target;
+
+        while (!el.matches(elementStr)) {
+          if (el === client) {
+            el = null;
+            break;
+          }
+
+          el = el.parentNode;
+        }
+
+        el && fn.call(el, el);
+      });
+    };
+
+    for (var i = 0; i < this.elements.length; i++) {
+      _loop2(i);
+    }
+
+    return this;
   }
 };
 $('#test').find('.child').addClass('red');
 $('#test').print();
+$('#test').on('click', 'div', function (e) {
+  console.log(e.textContent);
+});
 $('<div>11</div>').appendTo(test2);
-$('#test2').append($('<div><strong>22</strong></div>')).addClass('red');
+$('#test2').append($('<div><strong>22</strong><strong>33</strong></div>')).addClass('red');
 $('#hapi').siblings();
 console.log($('#test').next());
-},{}],"C:/Users/admin/AppData/Local/Yarn/Data/global/node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{}],"C:/Users/admin/AppData/Local/Yarn/Data/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -330,7 +360,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50273" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57537" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
@@ -506,5 +536,5 @@ function hmrAcceptRun(bundle, id) {
     return true;
   }
 }
-},{}]},{},["C:/Users/admin/AppData/Local/Yarn/Data/global/node_modules/parcel/src/builtins/hmr-runtime.js","jQuery.js"], null)
+},{}]},{},["C:/Users/admin/AppData/Local/Yarn/Data/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","jQuery.js"], null)
 //# sourceMappingURL=/jQuery.5c69adcb.js.map

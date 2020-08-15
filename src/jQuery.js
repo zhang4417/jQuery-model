@@ -19,14 +19,14 @@ window.$ = window.jQuery = function (selector) {
     }
     //创建新的标签
 
-    const api=Object.create(jQuery.prototype)
+    const api = Object.create(jQuery.prototype)
     //创建一个api对象，将函数都封装在__proto__(=jQuery.prototype)里面
-    Object.assign(api,{oidApi: elements.oldApi,elements: elements,})
+    Object.assign(api, { oidApi: elements.oldApi, elements: elements, })
     return api
 };
 
-jQuery.prototype= {
-    constructor:jQuery,
+jQuery.prototype = {
+    constructor: jQuery,
     jquery: true,
     get(index) {
         return this.elements[index]
@@ -114,36 +114,54 @@ jQuery.prototype= {
         return this
 
     },
-    prev(){
-        let array=[]
+    prev() {
+        let array = []
         // this.each(el=>array.push(el.previousNode))
-        for(let i=0;i<this.elements.length;i++){
-            let x=this.elements[i].previousSibling
-            while(x&&x.nodeType===3){
-                x=x.previousSibling
+        for (let i = 0; i < this.elements.length; i++) {
+            let x = this.elements[i].previousSibling
+            while (x && x.nodeType === 3) {
+                x = x.previousSibling
             }
             array.push(x)
         }
         return array
     },
-    next(){
-        let array=[]
-        this.each(el=>{
-            let x=el.nextSibling
-            while(x&&x.nodeType===3){
-                x=x.nextSibling
+    next() {
+        let array = []
+        this.each(el => {
+            let x = el.nextSibling
+            while (x && x.nodeType === 3) {
+                x = x.nextSibling
             }
             array.push(x)
-        }) 
-        return array        
+        })
+        return array
     },
+    on(event, elementStr, fn) {
+        for (let i = 0; i < this.elements.length; i++) {
+            const client = this.elements[i]
+            client.addEventListener(event, (e) => {
+                let el = e.target
+                while (!el.matches(elementStr)) {
+                    if (el === client) {
+                        el = null
+                        break;
+                    }
+                    el = el.parentNode
+                }
+                el && fn.call(el, el)
+            })
+        }
+        return this
+    }
 };
 
 
 $('#test').find('.child').addClass('red')
 $('#test').print()
+$('#test').on('click', 'div', function (e) { console.log(e.textContent) })
 $('<div>11</div>').appendTo(test2)
-$('#test2').append($('<div><strong>22</strong></div>')).addClass('red')
+$('#test2').append($('<div><strong>22</strong><strong>33</strong></div>')).addClass('red')
 $('#hapi').siblings()
 console.log($('#test').next())
 
